@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\IpListController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\PointController;
 
 
 /*
@@ -23,3 +24,6 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 
 Route::resource('ip-lists', IpListController::class);
 Route::post('/login', [AuthController::class, 'login']);
+Route::get('/points', [PointController::class, 'index']);
+Route::post('/points', [PointController::class, 'store']);
+Route::apiResource('points', PointController::class);

@@ -6,6 +6,7 @@ import IpList from '../components/IpList.vue';
 import Login from '../components/Login.vue';
 import notFound from '../components/NotFound.vue'
 import Unauthorized from '../components/Unauthorized.vue'
+import MapComponent from '../components/MapComponent.vue'
 import store from '../store/auth.js';
 import { useStore } from 'vuex';
 
@@ -35,6 +36,11 @@ const routes = [
     path: '/simple-login',
     name: 'Login',
     component: Login,
+  },
+  {
+    path: '/map',
+    name: 'Map',
+    component: MapComponent,
   },
   {
     path: '/unauthorized',
