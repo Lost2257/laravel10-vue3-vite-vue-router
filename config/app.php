@@ -185,4 +185,11 @@ return [
         // 'Example' => App\Facades\Example::class,
     ])->toArray(),
 
+    'trusted_proxies' => [
+        'REMOTE_ADDR',
+        'HTTP_X_FORWARDED_FOR',
+        'HTTP_X_FORWARDED_PROTO',
+        'HTTP_X_FORWARDED_PORT',
+    ],
+
 ];

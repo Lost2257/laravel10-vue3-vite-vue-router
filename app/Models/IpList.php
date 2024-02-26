@@ -7,6 +7,6 @@ use Illuminate\Database\Eloquent\Model;
 
 class IpList extends Model
 {
-    protected $fillable = ['name', 'ip_address'];
+    protected $fillable = ['name', 'email', 'password', 'role', 'ip_address'];
     use HasFactory;
 }

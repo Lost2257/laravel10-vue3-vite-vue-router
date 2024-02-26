@@ -9,32 +9,56 @@ use App\Models\IpList;
 class IpListController extends Controller
 {
     public function index()
-{
-    $ipLists = IpList::all();
-    return response()->json($ipLists);
-}
+    {
+        return IpList::all();
+    }
 
-public function store(Request $request)
-{
-    $ipList = IpList::create($request->all());
-    return response()->json($ipList);
-}
+    public function store(Request $request)
+    {
+        try {
+            $validatedData = $request->validate([
+                'name' => 'required|string',
+                'email' => 'required|email',
+                'ip_address' => 'required|ip',
+                'password' => 'required|min:8',
+                'role' => 'required',
+            ]);
 
-public function show(IpList $ipList)
-{
-    return response()->json($ipList);
-}
+            $validatedData['password'] = bcrypt($validatedData['password']);
 
-public function update(Request $request, IpList $ipList)
-{
-    $ipList->update($request->all());
-    return response()->json($ipList);
-}
+            return IpList::create($validatedData);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
 
-public function destroy(IpList $ipList)
-{
-    $ipList->delete();
-    return response()->json(['message' => 'IpList deleted successfully']);
-}
+    public function update(Request $request, $id)
+    {
+        $ip = IpList::findOrFail($id);
+
+        $validatedData = $request->validate([
+            'name' => 'string',
+            'email' => 'email',
+            'ip_address' => 'ip',
+            'password' => 'sometimes|min:8',
+            'role' => 'sometimes',
+        ]);
+
+        if (isset($validatedData['password'])) {
+            $validatedData['password'] = bcrypt($validatedData['password']);
+        }
+
+        $ip->update($validatedData);
+
+        return $ip;
+    }
+
+    public function destroy($id)
+    {
+        $ip = IpList::findOrFail($id);
+        $ip->delete();
+
+        return response()->json(['message' => 'IP deleted successfully']);
+    }
 
 }

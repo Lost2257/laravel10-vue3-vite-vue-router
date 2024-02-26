@@ -5,5 +5,6 @@ import { createApp } from 'vue';
 import app from './components/app.vue';
 
 import router from './router/index.js'
+import store from './store.js';
 
-createApp(app).use(router).mount("#app")
+createApp(app).use(router).use(store).mount("#app")

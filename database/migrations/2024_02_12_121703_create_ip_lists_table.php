@@ -14,6 +14,9 @@ return new class extends Migration
         Schema::create('ip_lists', function (Blueprint $table) {
             $table->id();
             $table->string('name');
+            $table->string('email')->nullable();
+            $table->string('password')->nullable();
+            $table->string('role')->nullable();
             $table->string('ip_address');
             $table->timestamps();
         });
