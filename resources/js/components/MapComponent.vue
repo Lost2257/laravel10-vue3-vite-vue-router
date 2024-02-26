@@ -107,18 +107,51 @@
             this.newPoint.lng = '';
         }
     },
-    addMarker(locationId, lat, lng, title) {
-  // Create a marker and add it to the map
-  const marker = L.marker([lat, lng]).addTo(this.map)
-    .bindPopup(title)
-    .openPopup();
+    handleMapClick(event) {
+      const { lat, lng } = event.latlng;
 
-  // Add the marker to the markers array
-  this.markers.push({
-    locationId,
-    marker,
-  });
-},
+      // Prompt the user for a title for the new point
+      const title = prompt('Enter a title for the new point:');
+
+      if (title) {
+        // Send a POST request to your API endpoint
+        axios.post('/api/points', {
+          title,
+          lat,
+          lng,
+        })
+        .then(response => {
+          // Do something with the response if needed
+          console.log(response.data);
+
+          // Add the new point to the local points array
+          this.points.push({
+            id: response.data.id,
+            title,
+            lat,
+            lng,
+          });
+
+          // Add a marker for the new point
+          this.addMarker(response.data.id, lat, lng, title);
+        })
+        .catch(error => {
+          console.error('Error adding new point:', error);
+        });
+      }
+    },
+    addMarker(locationId, lat, lng, title) {
+      // Create a marker and add it to the map
+      const marker = L.marker([lat, lng]).addTo(this.map)
+        .bindPopup(title)
+        .openPopup();
+
+      // Add the marker to the markers array
+      this.markers.push({
+        locationId,
+        marker,
+      });
+    },
 
     deleteLocation(index) {
   const deletedLocation = this.points[index];
@@ -155,6 +188,7 @@ removeMarker(locationId) {
     mounted() {
   // Initialize the map
   this.map = L.map(this.$refs.map).setView([54.8985, 23.9036], 12);
+  this.map.on('click', this.handleMapClick);
 
   // Use OpenStreetMap tile layer
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -202,6 +236,7 @@ removeMarker(locationId) {
       // Ensure to remove the map and user marker when the component is destroyed
       if (this.map) {
         this.map.remove();
+        this.map.off('click', this.handleMapClick);
       }
     },
   };
