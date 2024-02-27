@@ -33,6 +33,7 @@
               <th>Title</th>
               <th>Latitude</th>
               <th>Longitude</th>
+              <th>Atstumas</th>
               <th>Action</th>
             </tr>
           </thead>
@@ -41,6 +42,10 @@
               <td>{{ point.title }}</td>
               <td>{{ point.lat }}</td>
               <td>{{ point.lng }}</td>
+              <td>
+                <span class="distance">{{ calculateDistance(point.lat, point.lng) }} meters</span>
+            </td>
+
               <td>
                   <button @click="deleteLocation(index)" class="btn btn-danger">Delete</button>
                 </td>
@@ -57,6 +62,15 @@
   import L from 'leaflet';
   import 'leaflet/dist/leaflet.css'; // Import Leaflet CSS
 
+  L.Popup.prototype._animateZoom = function (e) {
+  if (!this._map) {
+    return;
+  }
+  var pos = this._map._latLngToNewLayerPoint(this._latlng, e.zoom, e.center),
+    anchor = this._getAnchor();
+  L.DomUtil.setPosition(this._container, pos.add(anchor));
+};
+
   export default {
     name: 'MapComponent',
     data() {
@@ -72,7 +86,30 @@
         markers: [],
       };
     },
+    watch: {
+  points: {
+    handler(newPoints) {
+      if (this.map) {
+        this.markers.forEach(marker => this.map.removeLayer(marker.marker));
+        this.markers = [];
+        newPoints.forEach(point => {
+          this.addMarker(point.id, point.lat, point.lng, point.title);
+        });
+      }
+    },
+    deep: true,
+  },
+},
     methods: {
+        calculateDistance(lat, lng) {
+    if (this.userMarker) {
+      const userLatLng = this.userMarker.getLatLng();
+      const pointLatLng = L.latLng(lat, lng);
+      const distance = userLatLng.distanceTo(pointLatLng);
+      return distance.toFixed(2); // Return distance rounded to two decimal places
+    }
+    return '';
+  },
         addNewPoint() {
         const { title, lat, lng } = this.newPoint;
         if (title && lat && lng) {
@@ -141,6 +178,8 @@
       }
     },
     addMarker(locationId, lat, lng, title) {
+    // Check if the map instance exists before adding a marker
+    if (this.map) {
       // Create a marker and add it to the map
       const marker = L.marker([lat, lng]).addTo(this.map)
         .bindPopup(title)
@@ -151,7 +190,8 @@
         locationId,
         marker,
       });
-    },
+    }
+  },
 
     deleteLocation(index) {
   const deletedLocation = this.points[index];
@@ -167,13 +207,17 @@
     });
 },
 removeMarker(locationId) {
-  // Find the marker with the given locationId and remove it from the map
-  const markerIndex = this.markers.findIndex(marker => marker.locationId === locationId);
-  if (markerIndex !== -1) {
-    this.map.removeLayer(this.markers[markerIndex].marker);
-    this.markers.splice(markerIndex, 1);
-  }
-},
+    // Check if the map and markers array exist before proceeding
+    if (this.map && this.markers) {
+      // Find the marker with the given locationId and remove it from the map
+      const markerIndex = this.markers.findIndex(marker => marker.locationId === locationId);
+      if (markerIndex !== -1) {
+        this.map.removeLayer(this.markers[markerIndex].marker);
+        this.markers.splice(markerIndex, 1);
+      }
+    }
+  },
+
 
     fetchPoints() {
   return axios.get('/api/points')
@@ -232,13 +276,14 @@ removeMarker(locationId) {
   }
 },
 
-    beforeDestroy() {
-      // Ensure to remove the map and user marker when the component is destroyed
-      if (this.map) {
-        this.map.remove();
-        this.map.off('click', this.handleMapClick);
-      }
-    },
+beforeDestroy() {
+  // Ensure to remove the map and user marker when the component is destroyed
+  if (this.map) {
+    this.map.off('click', this.handleMapClick);
+    this.map.remove();
+    this.map = null;  // Set the map instance to null when removing it
+  }
+},
   };
   </script>
 
