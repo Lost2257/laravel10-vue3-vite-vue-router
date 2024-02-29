@@ -7,6 +7,6 @@ use Illuminate\Database\Eloquent\Model;
 
 class Point extends Model
 {
-    protected $fillable = ['title', 'lat', 'lng'];
+    protected $fillable = ['title', 'lat', 'lng', 'image'];
     use HasFactory;
 }

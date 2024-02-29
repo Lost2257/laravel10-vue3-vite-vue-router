@@ -4,7 +4,7 @@
             <div class="col-md-6">
 
       <div ref="map" class="leaflet-map"></div>
-      <form @submit.prevent="addNewPoint">
+      <form @submit.prevent="addNewPoint" enctype="multipart/form-data">
         <div class="mb-3">
           <label for="newPointTitle" class="form-label">Title:</label>
           <input type="text" id="newPointTitle" v-model="newPoint.title" class="form-control" required>
@@ -20,6 +20,15 @@
           <input type="text" id="newPointLng" v-model="newPoint.lng" class="form-control" required>
         </div>
 
+        <div class="mb-3">
+  <label for="newPointImage" class="form-label">Image:</label>
+  <input type="file" id="newPointImage" @change="handleImageChange" class="form-control" accept="image/*">
+  <!-- Add image preview container -->
+  <div v-if="imagePreview" class="mt-2">
+    <img :src="imagePreview" alt="Image Preview" style="max-width: 100%;">
+  </div>
+</div>
+
         <button type="submit" class="btn btn-primary">Add New Point</button>
       </form>
       </div>
@@ -30,6 +39,7 @@
         <table class="table">
           <thead>
             <tr>
+              <th>Foto</th>
               <th>Title</th>
               <th>Latitude</th>
               <th>Longitude</th>
@@ -39,6 +49,9 @@
           </thead>
           <tbody>
             <tr v-for="(point, index) in points" :key="index">
+              <td>
+                <img :src="point.image" alt="Location Image" class="location-image">
+              </td>
               <td>{{ point.title }}</td>
               <td>{{ point.lat }}</td>
               <td>{{ point.lng }}</td>
@@ -71,6 +84,15 @@
   L.DomUtil.setPosition(this._container, pos.add(anchor));
 };
 
+var LeafIcon = L.Icon.extend({
+  options: {
+    iconSize: [40, 40],
+    iconAnchor: [20, 40],
+    popupAnchor: [0, -40],
+  },
+
+});
+
   export default {
     name: 'MapComponent',
     data() {
@@ -81,6 +103,8 @@
           title: '',
           lat: '',
           lng: '',
+          image: null,
+          imagePreview: null,
         },
         points: [],
         markers: [],
@@ -110,90 +134,127 @@
     }
     return '';
   },
-        addNewPoint() {
-        const { title, lat, lng } = this.newPoint;
-        if (title && lat && lng) {
-            // Send a POST request to your API endpoint
-            axios.post('/api/points', {
-            title,
-            lat,
-            lng,
-            })
-            .then(response => {
-            // Do something with the response if needed
-            console.log(response.data);
+  addNewPoint() {
+  const { title, lat, lng, image } = this.newPoint;
 
-            // Add the new point to the local points array
-            this.points.push({
-                id: response.data.id, // Make sure your API response includes the new point's ID
-                title,
-                lat,
-                lng,
-            });
+  if (title && lat && lng && image) {
+    const formData = new FormData();
+    formData.append('title', title);
+    formData.append('lat', lat);
+    formData.append('lng', lng);
+    formData.append('image', image);
 
-            // Add a marker for the new point
-            this.addMarker(response.data.id, lat, lng, title);
-            })
-            .catch(error => {
-            console.error('Error adding new point:', error);
-            });
+    // Send a POST request to your API endpoint
+    axios.post('/api/points', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    })
+      .then(response => {
+        // Do something with the response if needed
+        console.log(response.data);
 
-            // Clear the form fields
-            this.newPoint.title = '';
-            this.newPoint.lat = '';
-            this.newPoint.lng = '';
-        }
-    },
-    handleMapClick(event) {
-      const { lat, lng } = event.latlng;
-
-      // Prompt the user for a title for the new point
-      const title = prompt('Enter a title for the new point:');
-
-      if (title) {
-        // Send a POST request to your API endpoint
-        axios.post('/api/points', {
+        // Add the new point to the local points array
+        this.points.push({
+          id: response.data.id,
           title,
           lat,
           lng,
-        })
-        .then(response => {
-          // Do something with the response if needed
-          console.log(response.data);
-
-          // Add the new point to the local points array
-          this.points.push({
-            id: response.data.id,
-            title,
-            lat,
-            lng,
-          });
-
-          // Add a marker for the new point
-          this.addMarker(response.data.id, lat, lng, title);
-        })
-        .catch(error => {
-          console.error('Error adding new point:', error);
+          image: response.data.image,
         });
-      }
-    },
-    addMarker(locationId, lat, lng, title) {
-    // Check if the map instance exists before adding a marker
-    if (this.map) {
-      // Create a marker and add it to the map
-      const marker = L.marker([lat, lng]).addTo(this.map)
-        .bindPopup(title)
-        .openPopup();
 
-      // Add the marker to the markers array
-      this.markers.push({
-        locationId,
-        marker,
+        // Add a marker for the new point
+        this.addMarker(response.data.id, lat, lng, title, response.data.image);
+      })
+      .catch(error => {
+        console.error('Error adding new point:', error);
+        // Handle error or show a user-friendly message
       });
-    }
-  },
 
-    deleteLocation(index) {
+    // Clear the form fields
+    this.newPoint.title = '';
+    this.newPoint.lat = '';
+    this.newPoint.lng = '';
+    this.newPoint.image = null;
+  } else {
+    // Handle case where not all required fields are filled
+    console.error('Please fill in all required fields.');
+  }
+},
+handleMapClick(event) {
+  const { lat, lng } = event.latlng;
+
+  // Prompt the user for a title for the new point
+  const title = prompt('Enter a title for the new point:');
+  if (!title) return;
+
+  // Prompt the user to select an image for the new point
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/*';
+  input.click();
+
+  input.addEventListener('change', () => {
+    const image = input.files[0];
+
+    if (!image) {
+      alert('Please select an image.');
+      return;
+    }
+
+    // Upload the image and create the point
+    const formData = new FormData();
+    formData.append('title', title);
+    formData.append('lat', lat);
+    formData.append('lng', lng);
+    formData.append('image', image);
+
+    // Send a POST request to your API endpoint
+    axios.post('/api/points', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    })
+    .then(response => {
+      // Do something with the response if needed
+      console.log(response.data);
+
+      // Add the new point to the local points array
+      this.points.push({
+        id: response.data.id,
+        title,
+        lat,
+        lng,
+        image: response.data.image,
+      });
+
+      // Add a marker for the new point
+      this.addMarker(response.data.id, lat, lng, title, response.data.image);
+    })
+    .catch(error => {
+      console.error('Error adding new point:', error);
+    });
+  });
+},
+    addMarker(locationId, lat, lng, title, image) {
+  if (this.map && image) {
+    const customMarkerIcon = new LeafIcon({ iconUrl: image });
+
+    const marker = L.marker([lat, lng], { icon: customMarkerIcon }).addTo(this.map);
+
+    this.markers.push({
+      locationId,
+      marker,
+      icon: customMarkerIcon,
+    });
+
+    marker.bindPopup(`<div><img src="${image}" alt="${title}" class="popup-image" /><br>${title}</div>`);
+
+    marker.on('click', () => marker.openPopup());
+  }
+},
+
+deleteLocation(index) {
   const deletedLocation = this.points[index];
   axios.delete(`/api/points/${deletedLocation.id}`)
     .then(response => {
@@ -206,29 +267,87 @@
       console.error('Error deleting location:', error);
     });
 },
+
 removeMarker(locationId) {
-    // Check if the map and markers array exist before proceeding
-    if (this.map && this.markers) {
-      // Find the marker with the given locationId and remove it from the map
-      const markerIndex = this.markers.findIndex(marker => marker.locationId === locationId);
-      if (markerIndex !== -1) {
-        this.map.removeLayer(this.markers[markerIndex].marker);
-        this.markers.splice(markerIndex, 1);
+  // Check if the map and markers array exist before proceeding
+  if (this.map && this.markers) {
+    // Iterate over the markers array to find and remove the marker
+    this.markers.forEach((markerInfo, index) => {
+      if (markerInfo.locationId === locationId) {
+        // Remove the marker from the map
+        this.map.removeLayer(markerInfo.marker);
+        // Remove the marker from the markers array
+        this.markers.splice(index, 1);
       }
-    }
-  },
-
-
-    fetchPoints() {
-  return axios.get('/api/points')
-    .then(response => {
-      this.points = response.data;  // Update the points data property
-    })
-    .catch(error => {
-      console.error('Error fetching points:', error);
     });
+  }
 },
+
+
+  fetchPoints() {
+      return axios.get('/api/points')
+        .then(response => {
+          console.log('API response:', response.data);  // Log the API response
+          this.points = response.data;
+
+          // Add markers for each point
+          this.points.forEach(point => {
+            this.addMarker(point.id, point.lat, point.lng, point.title, point.image);
+          });
+        })
+        .catch(error => {
+          console.error('Error fetching points:', error);
+        });
     },
+watchUserLocation() {
+    this.watchId = navigator.geolocation.watchPosition(position => {
+      this.updateUserLocation(position);
+    }, error => {
+      console.error('Error watching geolocation:', error);
+    });
+  },
+fetchUserLocation() {
+    if ('geolocation' in navigator) {
+      navigator.geolocation.getCurrentPosition(position => {
+        this.updateUserLocation(position);
+      }, error => {
+        console.error('Error getting geolocation:', error);
+      });
+    }
+    },
+    updateUserLocation(position) {
+    const userLat = position.coords.latitude;
+    const userLng = position.coords.longitude;
+
+    // Update the user's marker location
+    if (this.userMarker) {
+      this.userMarker.setLatLng([userLat, userLng]);
+    } else {
+      // Add a marker for the user's location
+      this.userMarker = L.marker([userLat, userLng]).addTo(this.map)
+        .bindPopup('Your Location')
+        .openPopup();
+    }
+
+    // Set the map view to the user's location
+    this.map.setView([userLat, userLng], 12);
+  },
+  handleImageChange(event) {
+  const file = event.target.files[0];
+
+  // Update newPoint.image
+  this.newPoint.image = file;
+
+  // Optionally, you can also display a preview of the selected image
+  const reader = new FileReader();
+  reader.onload = () => {
+    this.imagePreview = reader.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+  // ... rest of your component code
+},
     mounted() {
   // Initialize the map
   this.map = L.map(this.$refs.map).setView([54.8985, 23.9036], 12);
@@ -239,44 +358,27 @@ removeMarker(locationId) {
     attribution: '© OpenStreetMap contributors',
   }).addTo(this.map);
 
-  // Get user's geolocation
+  // Fetch initial user location
+  this.fetchUserLocation();
+
+  // Continuously track user location
   if ('geolocation' in navigator) {
-    navigator.geolocation.getCurrentPosition(position => {
-      const userLat = position.coords.latitude;
-      const userLng = position.coords.longitude;
-
-      // Add a marker for the user's location
-      this.userMarker = L.marker([userLat, userLng]).addTo(this.map)
-        .bindPopup('Your Location')
-        .openPopup();
-
-      // Set the map view to the user's location
-      this.map.setView([userLat, userLng], 12);
-
-      // Fetch points from the API
-      this.fetchPoints().then(() => {
-  // Add markers for each point
-  this.points.forEach(point => {
-    L.marker([point.lat, point.lng]).addTo(this.map)
-      .bindPopup(point.title);
-  });
-});
-    }, error => {
-      console.error('Error getting geolocation:', error);
-
-      // Fetch points from the API
-      this.fetchPoints().then(() => {
-  // Add markers for each point
-  this.points.forEach(point => {
-    L.marker([point.lat, point.lng]).addTo(this.map)
-      .bindPopup(point.title);
-  });
-});
-    });
+    this.watchUserLocation();
   }
+
+  // Fetch points from the API
+  this.fetchPoints().then(() => {
+    // Add markers for each point
+    this.points.forEach(point => {
+        this.addMarker(point.id, point.lat, point.lng, point.title, point.image);
+    });
+  });
 },
 
 beforeDestroy() {
+  if (this.watchId) {
+    navigator.geolocation.clearWatch(this.watchId);
+  }
   // Ensure to remove the map and user marker when the component is destroyed
   if (this.map) {
     this.map.off('click', this.handleMapClick);
@@ -323,5 +425,14 @@ beforeDestroy() {
 .delete-button-container {
   text-align: center;
   margin-top: 20px;
+}
+
+.location-image{
+    width: 40px;
+}
+.custom-marker {
+  display: inline-block;
+  text-align: center;
+  line-height: 0;
 }
 </style>
