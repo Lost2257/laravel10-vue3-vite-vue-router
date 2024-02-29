@@ -1,72 +1,74 @@
 <template>
     <div class="map-container">
-        <div class="row">
-            <div class="col-md-6">
+      <div class="row">
+        <div class="col-md-6">
 
-      <div ref="map" class="leaflet-map"></div>
-      <form @submit.prevent="addNewPoint" enctype="multipart/form-data">
-        <div class="mb-3">
-          <label for="newPointTitle" class="form-label">Title:</label>
-          <input type="text" id="newPointTitle" v-model="newPoint.title" class="form-control" required>
+          <div ref="map" class="leaflet-map"></div>
+          <form @submit.prevent="addNewPoint" enctype="multipart/form-data">
+            <div class="mb-3">
+              <label for="newPointTitle" class="form-label">Title:</label>
+              <input type="text" id="newPointTitle" v-model="newPoint.title" class="form-control" required>
+            </div>
+
+            <div class="mb-3">
+              <label for="newPointLat" class="form-label">Latitude:</label>
+              <input type="text" id="newPointLat" v-model="newPoint.lat" class="form-control" required>
+            </div>
+
+            <div class="mb-3">
+              <label for="newPointLng" class="form-label">Longitude:</label>
+              <input type="text" id="newPointLng" v-model="newPoint.lng" class="form-control" required>
+            </div>
+
+            <div class="mb-3">
+              <label for="newPointImage" class="form-label">Image:</label>
+              <input type="file" id="newPointImage" @change="handleImageChange" class="form-control" accept="image/*">
+              <!-- Add image preview container -->
+              <div v-if="imagePreview" class="mt-2">
+                <img :src="imagePreview" alt="Image Preview" style="max-width: 100%;">
+              </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Add New Point</button>
+          </form>
         </div>
 
-        <div class="mb-3">
-          <label for="newPointLat" class="form-label">Latitude:</label>
-          <input type="text" id="newPointLat" v-model="newPoint.lat" class="form-control" required>
+        <div class="col-md-6 points-list-container">
+          <div class="points-list mt-4">
+            <h2>Points List</h2>
+            <div class="table-responsive">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Foto</th>
+                    <th>Title</th>
+                    <th>Latitude</th>
+                    <th>Longitude</th>
+                    <th>Atstumas</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="(point, index) in points" :key="index">
+                    <td>
+                      <img :src="point.image" alt="Location Image" class="location-image">
+                    </td>
+                    <td>{{ point.title }}</td>
+                    <td>{{ point.lat }}</td>
+                    <td>{{ point.lng }}</td>
+                    <td>
+                      <span class="distance">{{ calculateDistance(point.lat, point.lng) }} meters</span>
+                    </td>
+
+                    <td>
+                      <button @click="deleteLocation(index)" class="btn btn-danger">Delete</button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
-
-        <div class="mb-3">
-          <label for="newPointLng" class="form-label">Longitude:</label>
-          <input type="text" id="newPointLng" v-model="newPoint.lng" class="form-control" required>
-        </div>
-
-        <div class="mb-3">
-  <label for="newPointImage" class="form-label">Image:</label>
-  <input type="file" id="newPointImage" @change="handleImageChange" class="form-control" accept="image/*">
-  <!-- Add image preview container -->
-  <div v-if="imagePreview" class="mt-2">
-    <img :src="imagePreview" alt="Image Preview" style="max-width: 100%;">
-  </div>
-</div>
-
-        <button type="submit" class="btn btn-primary">Add New Point</button>
-      </form>
-      </div>
-
-      <div class="col-md-6 points-list-container">
-      <div class="points-list mt-4">
-        <h2>Points List</h2>
-        <table class="table">
-          <thead>
-            <tr>
-              <th>Foto</th>
-              <th>Title</th>
-              <th>Latitude</th>
-              <th>Longitude</th>
-              <th>Atstumas</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="(point, index) in points" :key="index">
-              <td>
-                <img :src="point.image" alt="Location Image" class="location-image">
-              </td>
-              <td>{{ point.title }}</td>
-              <td>{{ point.lat }}</td>
-              <td>{{ point.lng }}</td>
-              <td>
-                <span class="distance">{{ calculateDistance(point.lat, point.lng) }} meters</span>
-            </td>
-
-              <td>
-                  <button @click="deleteLocation(index)" class="btn btn-danger">Delete</button>
-                </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-      </div>
       </div>
     </div>
   </template>
@@ -397,16 +399,18 @@ beforeDestroy() {
 }
 
 .leaflet-map {
-  height: 100%;
+  height: 400px; /* Adjust the height for better visibility on mobile devices */
 }
 
 .row {
   display: flex;
+  flex-wrap: wrap; /* Allow items to wrap to the next line on smaller screens */
 }
 
 .col-md-6 {
-  flex: 0 0 50%;
-  max-width: 50%;
+  flex: 0 0 100%; /* Make each column take 100% width on smaller screens */
+  max-width: 100%;
+  margin-bottom: 20px; /* Add some space between columns on smaller screens */
 }
 
 .points-list-container {
@@ -427,9 +431,10 @@ beforeDestroy() {
   margin-top: 20px;
 }
 
-.location-image{
-    width: 40px;
+.location-image {
+  width: 40px;
 }
+
 .custom-marker {
   display: inline-block;
   text-align: center;
