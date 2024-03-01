@@ -24,7 +24,7 @@
               <label for="newPointImage" class="form-label">Image:</label>
               <input type="file" id="newPointImage" @change="handleImageChange" class="form-control" accept="image/*">
               <!-- Add image preview container -->
-              <div v-if="imagePreview" class="mt-2">
+              <div v-if="newPoint.imagePreview" class="mt-2">
                 <img :src="imagePreview" alt="Image Preview" style="max-width: 100%;">
               </div>
             </div>
@@ -119,7 +119,7 @@ var LeafIcon = L.Icon.extend({
         this.markers.forEach(marker => this.map.removeLayer(marker.marker));
         this.markers = [];
         newPoints.forEach(point => {
-          this.addMarker(point.id, point.lat, point.lng, point.title);
+          this.addMarker(point.id, point.lat, point.lng, point.title, point.image);
         });
       }
     },
