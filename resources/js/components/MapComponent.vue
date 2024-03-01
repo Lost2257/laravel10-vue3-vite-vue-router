@@ -332,7 +332,7 @@ fetchUserLocation() {
     }
 
     // Set the map view to the user's location
-    this.map.setView([userLat, userLng], 12);
+    //CENTRAVIMAS this.map.setView([userLat, userLng], 12);
   },
   handleImageChange(event) {
   const file = event.target.files[0];
