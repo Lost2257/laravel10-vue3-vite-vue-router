@@ -11,15 +11,6 @@
         <div class="col-md-4 mt-5">
             <router-link to="/map" class="btn btn-dark btn-block  p-5" >MAP</router-link>
         </div>
-        <div class="col-md-4 mt-5">
-            <router-link to="/ip-list" class="btn btn-dark btn-block  p-5" >IP LIST</router-link>
-        </div>
-        <div class="col-md-4 mt-5">
-            <router-link to="/ip-list" class="btn btn-dark btn-block  p-5" >IP LIST</router-link>
-        </div>
-        <div class="col-md-4 mt-5">
-            <router-link to="/ip-list" class="btn btn-dark btn-block  p-5" >IP LIST</router-link>
-        </div>
 
       </div>
     </div>

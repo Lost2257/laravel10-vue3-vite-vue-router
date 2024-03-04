@@ -41,6 +41,8 @@ const routes = [
     path: '/map',
     name: 'Map',
     component: MapComponent,
+
+
   },
   {
     path: '/unauthorized',

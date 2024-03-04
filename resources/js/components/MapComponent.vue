@@ -76,6 +76,8 @@
   <script>
   import L from 'leaflet';
   import 'leaflet/dist/leaflet.css'; // Import Leaflet CSS
+  import 'leaflet-rotatedmarker';
+  import userIconUrl from '../../../public/images/user.png'; // Adjust the path based on your project structure
 
   L.Popup.prototype._animateZoom = function (e) {
   if (!this._map) {
@@ -88,9 +90,9 @@
 
 var LeafIcon = L.Icon.extend({
   options: {
-    iconSize: [40, 40],
-    iconAnchor: [20, 40],
-    popupAnchor: [0, -40],
+    iconSize: [32, 32],
+    iconAnchor: [16, 32],
+    popupAnchor: [0, -32],
   },
 
 });
@@ -296,6 +298,7 @@ removeMarker(locationId) {
           this.points.forEach(point => {
             this.addMarker(point.id, point.lat, point.lng, point.title, point.image);
           });
+          this.points = response.data;
         })
         .catch(error => {
           console.error('Error fetching points:', error);
@@ -318,22 +321,33 @@ fetchUserLocation() {
     }
     },
     updateUserLocation(position) {
-    const userLat = position.coords.latitude;
-    const userLng = position.coords.longitude;
+  const userLat = position.coords.latitude;
+  const userLng = position.coords.longitude;
 
-    // Update the user's marker location
-    if (this.userMarker) {
-      this.userMarker.setLatLng([userLat, userLng]);
-    } else {
-      // Add a marker for the user's location
-      this.userMarker = L.marker([userLat, userLng]).addTo(this.map)
-        .bindPopup('Your Location')
-        .openPopup();
-    }
 
-    // Set the map view to the user's location
-    //CENTRAVIMAS this.map.setView([userLat, userLng], 12);
-  },
+  // Create a custom user icon with a blue radar
+  const userIcon = new L.Icon({
+    iconUrl: userIconUrl, // Path to your 'user.png' icon
+    iconSize: [32,32],
+    iconAnchor: [16, 32],
+    popupAnchor: [0, -32],
+  });
+
+  // Create a marker for the user's location
+  if (this.userMarker) {
+    this.userMarker.setLatLng([userLat, userLng]);
+    this.userMarker.setIcon(userIcon);
+  } else {
+    // Add a marker for the user's location using the custom icon
+    this.userMarker = L.marker([userLat, userLng], {
+      icon: userIcon,
+    }).addTo(this.map).bindPopup('test').openPopup();
+  }
+
+  // Set the map view to the user's location
+  //this.map.setView([userLat, userLng], 12);
+},
+
   handleImageChange(event) {
   const file = event.target.files[0];
 
@@ -351,10 +365,10 @@ fetchUserLocation() {
   // ... rest of your component code
 },
     mounted() {
+    L.Icon.Default.imagePath = 'http://cdn.leafletjs.com/leaflet-0.7.3/images';
   // Initialize the map
-  this.map = L.map(this.$refs.map).setView([54.8985, 23.9036], 12);
+  this.map = L.map(this.$refs.map).setView([54.8985, 23.9036], 16);
   this.map.on('click', this.handleMapClick);
-
   // Use OpenStreetMap tile layer
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© OpenStreetMap contributors',
@@ -399,18 +413,18 @@ beforeDestroy() {
 }
 
 .leaflet-map {
-  height: 400px; /* Adjust the height for better visibility on mobile devices */
+  height: 400px;
 }
 
 .row {
   display: flex;
-  flex-wrap: wrap; /* Allow items to wrap to the next line on smaller screens */
+  flex-wrap: wrap;
 }
 
 .col-md-6 {
-  flex: 0 0 100%; /* Make each column take 100% width on smaller screens */
+  flex: 0 0 100%;
   max-width: 100%;
-  margin-bottom: 20px; /* Add some space between columns on smaller screens */
+  margin-bottom: 20px;
 }
 
 .points-list-container {
